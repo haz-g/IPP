@@ -49,7 +49,7 @@ def setup_storage(CNN_preprocessing: bool, num_steps: int, num_envs: int, device
     if CNN_preprocessing:
         obs = torch.zeros((num_steps, num_envs, 128)).to(device)
     else:
-        obs = torch.zeros((num_steps, num_envs) + envs.single_observation_space.shape).to(device)
+        obs = torch.zeros((num_steps, num_envs) + (10,5,5)).to(device)
     actions = torch.zeros((num_steps, num_envs) + envs.single_action_space.shape).to(device)
     logprobs = torch.zeros((num_steps, num_envs)).to(device)
     rewards = torch.zeros((num_steps, num_envs)).to(device)
@@ -182,7 +182,6 @@ def collect_rollout_step(agent, pre_processor, envs, next_obs, next_done, meta_e
     # Handle mini and meta episode terminations
     for idx in range(config['num_envs']):
         if terminations[idx]:
-
             # Compute DREST rewards
             if infos['short'][idx]:
                 meta_ep_traj_counter[idx][0] += 1
@@ -203,6 +202,9 @@ def collect_rollout_step(agent, pre_processor, envs, next_obs, next_done, meta_e
                 envs.envs[idx].close()
                 envs.envs[idx] = train_env_list[new_idx]
                 meta_ep_traj_counter[idx] = [0,0]
+
+                single_env_obs, _ = envs.envs[idx].reset()
+                next_obs[idx] = single_env_obs
 
     storage_tensors['rewards'][step] = torch.tensor(reward).to(device).view(-1)
 

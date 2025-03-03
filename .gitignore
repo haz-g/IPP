@@ -1,0 +1,66 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+.env/
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# VS Code specific files
+.vscode/
+*.code-workspace
+.history/
+
+# PyCharm files
+.idea/
+*.iml
+
+# Model checkpoints and logging data
+wandb/
+runs/
+logs/
+*.log
+*.pt
+!models/.gitkeep
+
+# OS specific files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Data files
+# *.csv
+# *.pkl
+
+# Environment-specific
+.env
+.flaskenv
+config.local.py

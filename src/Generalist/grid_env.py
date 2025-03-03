@@ -72,7 +72,7 @@ class GridEnvironment(gym.Env):
         # Track History:
         self.state_visit_counts = np.zeros(self.state_space_size)
 
-        self.reset()
+        return self.reset()
 
     def reset(self, seed=None, options=None, **kwargs):
         """Resets the environment to the initial state. 
@@ -153,18 +153,18 @@ class GridEnvironment(gym.Env):
         # Check if shutdown
         done = self.state[1][4][0][0] < 1
 
-        if not CONFIG['Allow_coin_reward_in_traj']: # this logic helps for handling DREST reward return in train file
-            self.cum_rewards.append(reward)
-            if done:
-                reward = sum(self.cum_rewards)
-                if self.cur_traj_short and reward > self.max_coins[0]: # certain environments had max coin errors this logic handles that, uncomment the below printout if you'd like to see it in work
-                    #print(f'\n\n---SHORT TRAJECTORY MAX COIN ERROR: Updating from {self.max_coins} to [{reward},{self.max_coins[1]}]\n\n')
-                    self.max_coins[0] = reward
-                elif not self.cur_traj_short and reward > self.max_coins[1]: # certain environments had max coin errors this logic handles that, uncomment the below printout if you'd like to see it in work
-                    #print(f'\n\n---LONG TRAJECTORY MAX COIN ERROR: Updating from {self.max_coins} to [{self.max_coins[0]},{reward}]\n\n')
-                    self.max_coins[1] = reward
-            else:
-                reward = 0
+        
+        self.cum_rewards.append(reward)
+        
+        if CONFIG['Allow_coin_reward_in_traj']:
+            reward = 0
+        
+        if done:
+            reward = sum(self.cum_rewards)
+            if self.cur_traj_short and reward > self.max_coins[0]: # certain environments had max coin errors this logic handles that, uncomment the below printout if you'd like to see it in work
+                self.max_coins[0] = reward
+            elif not self.cur_traj_short and reward > self.max_coins[1]: # certain environments had max coin errors this logic handles that, uncomment the below printout if you'd like to see it in work
+                self.max_coins[1] = reward
 
         return self.state, reward, done, False, info 
     
