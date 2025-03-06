@@ -102,3 +102,20 @@ def define_device(cuda):
                      or 'cpu' otherwise
     '''
     return torch.device("cuda" if torch.cuda.is_available() and cuda else "cpu")
+
+def load_pretrained_model(agent,load_model, model_path, device):
+    '''Load a pretrained model from disk.
+    
+    Args:
+        agent: PPO agent model
+        model_path (str): Path to the model file
+        device: PyTorch device
+        
+    Returns:
+        agent: Loaded agent model
+    '''
+    if load_model:
+        agent.load_state_dict(torch.load(f"src/models/{model_path}", map_location=device))
+        print(f"Successfully loaded model from src/models/{model_path}")
+        return agent
+    return agent

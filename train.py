@@ -1,7 +1,7 @@
 import torch.optim as optim
 from config import CONFIG
 from src.Generalist.PPO2 import Agent
-from src.utilities.config_device import setup_wandb, seed_run, define_device, parse_args
+from src.utilities.config_device import setup_wandb, seed_run, define_device, parse_args, load_pretrained_model
 from src.utilities.config_env import load_envs, init_vec_envs
 from src.utilities.config_train_loop import (init_pre_processor, setup_storage, process_observation, setup_loop_params, anneal_learning_rate, 
                                              collect_rollout_step, compute_advantages, prepare_batch_data, update_policy,
@@ -25,6 +25,7 @@ if __name__ == "__main__":
     # ----- LOAD & INSTANTIATE PPO AGENT -----
 
     agent = Agent(envs).to(device)
+    agent = load_pretrained_model(agent, CONFIG['load_model'], CONFIG['model_to_load'], device)
     optimizer = optim.Adam(agent.parameters(), lr=CONFIG['learning_rate'], eps=1e-5)
     pre_processor = init_pre_processor(CONFIG['CNN_preprocessing'], device)
 
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     # Main training loop: iteration count defined as (total timesteps)/(batch size)
     for iteration in range(1, CONFIG['num_iterations'] + 1):
         #Decays LR if specified in CONFIG
-        anneal_learning_rate(optimizer, iteration, CONFIG['learning_rate'], CONFIG['decay_steps'], CONFIG['decay_rate'], CONFIG['anneal_lr'])
+        anneal_learning_rate(optimizer, iteration, CONFIG['learning_rate'], CONFIG['num_iterations'], CONFIG['decay_rate'], CONFIG['anneal_lr'])
 
         # ----- POLICY ROLLOUT: COLLECT N EXPERIENCES -----
 
@@ -66,9 +67,9 @@ if __name__ == "__main__":
         batch_data = prepare_batch_data(storage_tensors, advantages, returns, envs, CONFIG['CNN_preprocessing'], CONFIG['batch_size'])
 
         # Update policy
-        metrics = update_policy(agent, optimizer, batch_data, CONFIG['clip_coef'], CONFIG['vf_coef'], CONFIG['ent_coef'], 
+        metrics = update_policy(agent, optimizer, batch_data, CONFIG['clip_coef'], CONFIG['vf_coef'], CONFIG['initial_and_final_ent_coef'], 
                                 CONFIG['max_grad_norm'], CONFIG['target_kl'], CONFIG['update_epochs'], CONFIG['norm_adv'],
-                                CONFIG['clip_vloss'], CONFIG['batch_size'], CONFIG['minibatch_size'])
+                                CONFIG['clip_vloss'], CONFIG['batch_size'], CONFIG['minibatch_size'], iteration, CONFIG['num_iterations'])
 
         # ----- LOG METRICS -----
         log_metrics(iteration, agent, optimizer, metrics, train_env_list, loop_parameters, CONFIG)

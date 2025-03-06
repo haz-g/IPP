@@ -46,6 +46,7 @@ wheels/
 wandb/
 runs/
 logs/
+test.py
 *.log
 *.pt
 !models/.gitkeep

@@ -15,18 +15,18 @@ The project uses gridworld environments to test and validate the DREST reward fu
 ```
 PPO_torch/
 ├── config.py              # Main configuration parameters
-├── train.py              # Training script
-├── requirements.txt      # Project dependencies
-├── Generalist/          # Core agent implementation
-│   ├── grid_env.py      # Gridworld environment
-│   └── PPO2.py         # PPO agent implementation
+├── train.py               # Training script
+├── requirements.txt       # Project dependencies
+├── Generalist/            # Core agent implementation
+│   ├── grid_env.py        # Gridworld environment
+│   └── PPO2.py            # PPO agent implementation
 ├── gridworld_construction/  # Gridworld utilities
 │   ├── calculateM.py
 │   ├── convertToTensors.py
 │   ├── directM.py
 │   ├── draw_gridworld.py
-│   └── gridworlds_*.pkl    # Gridworld datasets
-├── utilities/           # Helper functions and utilities
+│   └── gridworlds_*.pkl   # Gridworld datasets
+├── utilities/             # Helper functions and utilities
 │   ├── classes.py
 │   ├── evals_utils.py
 │   ├── IMPALA_CNN.py
@@ -36,7 +36,7 @@ PPO_torch/
 │   ├── config_env.py
 │   ├── config_train_loop.py
 │   └── config_wrapup.py
-└── models/             # Directory for saved models
+└── models/                # Directory for saved models
 ```
 
 ## Installation
@@ -71,7 +71,7 @@ python3.11 -m venv venv
 venv\Scripts\activate
 ```
 
-3. Install dependencies:
+4. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
@@ -103,6 +103,45 @@ CONFIG = {
     ...
 }
 ```
+
+## Cloud Deployment
+
+### Syncing Files to Cloud
+
+To sync your local files to a cloud instance (e.g., Lambda Labs), use a form of the below command (feel free to adjust the 'exclude' prompts as necessary):
+
+```bash
+rsync -avz --exclude=".git" --exclude=".gitattributes" --exclude="venv/" \
+  --exclude="wandb/" --exclude="__pycache__/" --exclude="models/*" \
+  --exclude=".gitignore" /path/to/your/files lambda:/home/ubuntu/Lambda_IPP/
+```
+
+Note: If you're going to be continuing training from an existing model ensure you remove the ```--exclude="models/*"``` prompt.
+
+### Cloud Setup
+
+Setting up on cloud instances is straightforward:
+
+1. Sync your files to the cloud instance
+2. Navigate to your project directory
+3. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
+4. Install dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   ```
+5. Run the training script:
+   ```bash
+   python train.py
+   ```
+6. When prompted, select option 2 to log in to Weights & Biases
+7. Paste your API key from https://wandb.ai/settings
+
+Note: The default configuration in `config.py` is optimized for cloud environments. You can run it as-is for cloud deployment or adjust parameters for your specific setup.
 
 ## Training
 

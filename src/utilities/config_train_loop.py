@@ -114,14 +114,14 @@ def setup_loop_params(device, num_envs):
             'meta_ep_traj_counter': [[0,0] for _ in range(num_envs)], 
             'next_done': torch.zeros(num_envs).to(device)}
 
-def anneal_learning_rate(optimizer, iteration, learning_rate, decay_steps, decay_rate, anneal_lr):
+def anneal_learning_rate(optimizer, iteration, learning_rate, num_iterations, decay_rate, anneal_lr):
     '''Decay the learning rate based on training progress if enabled.
     
     Args:
         optimizer: PyTorch optimizer
         iteration (int): Current training iteration
         learning_rate (float): Initial learning rate
-        decay_steps (int): Number of steps for complete decay
+        num_iterations (int): Total number of iterations
         decay_rate (float): Rate of exponential decay
         anneal_lr (bool): Whether to enable learning rate annealing
         
@@ -129,9 +129,23 @@ def anneal_learning_rate(optimizer, iteration, learning_rate, decay_steps, decay
         Updates optimizer's learning rate in-place if annealing is enabled
     '''
     if anneal_lr:
-        progress = float(iteration) / float(decay_steps)
+        progress = float(iteration) / float(num_iterations)
         decayed_lr = learning_rate * (decay_rate ** progress)
         optimizer.param_groups[0]["lr"] = decayed_lr
+
+def anneal_entropy_coef(iteration, initial_and_final_ent_coef, num_iterations):
+    '''Decay the entropy coefficient based on training progress if enabled.
+    
+    Args:
+        iteration (int): Current training iteration
+        initial_and_final_ent_coef (tuple): initial and final desired entropy coefficients
+        num_iterations (int): Total number of iterations
+    Note:
+        Updates ent_coef value based on training progresss
+    '''
+    progress = float(iteration) / float(num_iterations)
+    current_ent_coef = initial_and_final_ent_coef[0] * (1 - progress) + initial_and_final_ent_coef[1] * progress
+    return current_ent_coef
 
 def collect_rollout_step(agent, pre_processor, envs, next_obs, next_done, meta_ep_traj_counter, train_env_list, step, storage_tensors, device, config):
     '''Execute one step of experience collection across all environments.
@@ -295,7 +309,7 @@ def prepare_batch_data(storage_tensors, advantages, returns, envs, CNN_preproces
             'b_values': b_values,
             'b_inds': b_inds}
 
-def update_policy(agent, optimizer, batch_data, clip_coef, vf_coef, ent_coef, max_grad_norm, target_kl, update_epochs, norm_adv, clip_vloss, batch_size, minibatch_size):
+def update_policy(agent, optimizer, batch_data, clip_coef, vf_coef, initial_and_final_ent_coef, max_grad_norm, target_kl, update_epochs, norm_adv, clip_vloss, batch_size, minibatch_size, iteration, num_iterations):
     '''Update policy and value networks using PPO algorithm.
     
     Implements the PPO algorithm with:
@@ -372,7 +386,7 @@ def update_policy(agent, optimizer, batch_data, clip_coef, vf_coef, ent_coef, ma
                     v_loss = 0.5 * ((newvalue - batch_data['b_returns'][mb_inds]) ** 2).mean()
 
                 entropy_loss = entropy.mean()
-                loss = pg_loss - ent_coef * entropy_loss + v_loss * vf_coef
+                loss = pg_loss - anneal_entropy_coef(iteration, initial_and_final_ent_coef, num_iterations) * entropy_loss + v_loss * vf_coef
 
                 optimizer.zero_grad()
                 loss.backward()
@@ -465,10 +479,10 @@ def log_metrics(iteration, agent, optimizer, metrics, train_env_list, loop_param
             usefulness = np.mean(train_usefulness_list)
             neutrality = np.mean(train_neutrality_list)
 
-            if usefulness > loop_parameters['cur_best_avr_usefulness'] and neutrality > loop_parameters['cur_best_avr_neutrality']:
-                artifact = wandb.Artifact(f"{config['model_save_name']}_USE_{int(round(usefulness,2)*100)}_NEUT_{int(round(neutrality,2)*100)}", type='model')
-                torch.save(agent.state_dict(), f"src/models/{config['model_save_name']}_USE_{int(round(usefulness,2)*100)}_NEUT_{int(round(neutrality,2)*100)}.pt")
-                artifact.add_file(f"src/models/{config['model_save_name']}_USE_{int(round(usefulness,2)*100)}_NEUT_{int(round(neutrality,2)*100)}.pt")
+            if (usefulness + neutrality)/2 > (loop_parameters['cur_best_avr_usefulness'] + loop_parameters['cur_best_avr_neutrality'])/2:
+                artifact = wandb.Artifact(f"{config['model_save_name']}U{int(round(usefulness,2)*100)}N{int(round(neutrality,2)*100)}", type='model')
+                torch.save(agent.state_dict(), f"src/models/{config['model_save_name']}U{int(round(usefulness,2)*100)}N{int(round(neutrality,2)*100)}.pt")
+                artifact.add_file(f"src/models/{config['model_save_name']}U{int(round(usefulness,2)*100)}N{int(round(neutrality,2)*100)}.pt")
                 wandb.log_artifact(artifact)
                 loop_parameters.update(cur_best_avr_usefulness=usefulness)
                 loop_parameters.update(cur_best_avr_neutrality=neutrality)

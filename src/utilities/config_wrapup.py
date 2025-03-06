@@ -67,8 +67,8 @@ def wrapup_training(agent, test_env_list, envs, config):
     envs.close()
 
     if config['track']:
-        artifact = wandb.Artifact(f"{config['model_save_name']}_final", type='model')
-        torch.save(agent.state_dict(), f"src/models/{config['model_save_name']}_final.pt")
-        artifact.add_file(f"src/models/{config['model_save_name']}_final.pt")
+        artifact = wandb.Artifact(f"{config['model_save_name']}FIN", type='model')
+        torch.save(agent.state_dict(), f"src/models/{config['model_save_name']}FIN.pt")
+        artifact.add_file(f"src/models/{config['model_save_name']}FIN.pt")
         wandb.log_artifact(artifact)
         wandb.finish()
