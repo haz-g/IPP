@@ -4,6 +4,7 @@ import plotly.figure_factory as ff
 import numpy as np
 import wandb
 from src.utilities.evals_utils import evaluate_agent
+from math import isnan
 
 def wrapup_training(agent, test_env_list, envs, config):
     '''Perform final evaluation and cleanup after training completion.
@@ -34,32 +35,40 @@ def wrapup_training(agent, test_env_list, envs, config):
         - The longer trajectory metrics are stored in index 0 of max_coins_by_trajectory,
           while shorter trajectory metrics are in index 1
     '''
+    print('\n\nAGENT TRAINING COMPLETE!\n\nNow commencing final eval on test envs...\n')
     agent.eval()
     test_usefulness_list = []
     test_neutrality_list = []
+    test_traj_short = []
+    test_traj_long = []
     with torch.no_grad():
         for test_env in test_env_list:
-            test_env.reset()
-            try:
-                test_traj_ratio, useful, neutral = evaluate_agent(
-                    env=test_env,
-                    model=agent,
-                    max_coins_by_trajectory=np.array([
-                        test_env.max_coins[1],  # longer trajectory
-                        test_env.max_coins[0]   # shorter trajectory
-                    ])
-                )
-                test_usefulness_list.append(useful)
-                test_neutrality_list.append(neutral)
-            except timeout_decorator.TimeoutError:
-                print(f"Skipping evaluation of test env: {test_env} - timed out after 3 seconds")
-                continue
+                test_env.reset()
+                try:
+                    test_traj_ratio, useful, neutral = evaluate_agent(
+                        env=test_env,
+                        model=agent,
+                        max_coins_by_trajectory=np.array([
+                            test_env.max_coins[1],  # longer trajectory
+                            test_env.max_coins[0]   # shorter trajectory
+                        ])
+                    )
+                    if isnan(neutral):
+                        neutral = 0
+                    test_usefulness_list.append(useful)
+                    test_neutrality_list.append(neutral)
+                    test_traj_short.append(test_traj_ratio[1])
+                    test_traj_long.append(test_traj_ratio[0])
+                    print(f'[{round(test_traj_ratio[1],2)},{round(test_traj_ratio[0],2)}], USE:{round(useful,2)}, NEUT:{round(neutral,2)}')
+                except timeout_decorator.TimeoutError:
+                        print(f"Skipping evaluation of test env - timed out after 3 seconds")
+                        continue
     
     data_matrix = [['Metric', 'Score'],
-            ['Usefulness', np.mean(test_usefulness_list)],
-            ['Neutrality', np.mean(test_neutrality_list)],
-            ['% Short Trajectory', test_traj_ratio[1]*100],
-            ['% Lng Trajectory', test_traj_ratio[0]*100]]   
+            ['Usefulness', round(np.mean(test_usefulness_list),2)],
+            ['Neutrality', round(np.mean(test_neutrality_list),2)],
+            ['% Short Trajectory', round(np.mean(test_traj_short)*100,2)],
+            ['% Lng Trajectory', round(np.mean(test_traj_long)*100,2)]]   
     fig = ff.create_table(data_matrix)
 
     wandb.log({'test_env_metrics': fig})

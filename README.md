@@ -1,6 +1,6 @@
 # DREST: PPO Implementation for Shutdownable Agents
 
-This repository contains a PyTorch implementation of Proximal Policy Optimization (PPO) for training agents with a Discounted REward for Same-Length Trajectories (DREST) reward function. This is part of ongoing research into training shutdownable agents via stochastic choice.
+This repository contains a PyTorch implementation of Proximal Policy Optimisation (PPO) for training agents with a Discounted REward for Same-Length Trajectories (DREST) reward function. This is part of ongoing research into training shutdownable agents via stochastic choice.
 
 ## Overview
 
@@ -94,15 +94,8 @@ CONFIG = {
 
 ### Cloud Setup (Recommended)
 - Tested on Lambda Labs' 1xGH200 instance
-- Supports up to 50 parallel environments
+- Adjust parallel environments count to suit CPU core count
 - Significantly faster training times
-- Default configuration in config.py:
-```python
-CONFIG = {
-    'num_envs': 50,  # For cloud GPU execution
-    ...
-}
-```
 
 ## Cloud Deployment
 
@@ -141,7 +134,7 @@ Setting up on cloud instances is straightforward:
 6. When prompted, select option 2 to log in to Weights & Biases
 7. Paste your API key from https://wandb.ai/settings
 
-Note: The default configuration in `config.py` is optimized for cloud environments. You can run it as-is for cloud deployment or adjust parameters for your specific setup.
+Note: The default configuration in `config.py` is optimised for cloud environments. You can run it as-is for cloud deployment or adjust parameters for your specific setup.
 
 ## Training
 
@@ -159,11 +152,11 @@ python train.py --num_envs 4  # For local execution
 
 ## Implementation Details
 
-The core PPO implementation is adapted from [CleanRL](https://docs.cleanrl.dev/rl-algorithms/ppo/#ppopy), modified to support the DREST reward function and specific requirements for training shutdownable agents.
+The core PPO implementation is adapted from [CleanRL](https://docs.cleanrl.dev/rl-algorithms/ppo/#ppopy), modified to support the DREST reward function and specific environment requirements for training shutdownable agents.
 
 Key features:
 - IMPALA CNN preprocessing for observations
-- Vectorized environment support
+- Vectorised environment support
 - Configurable DREST reward function
 - Comprehensive evaluation metrics for USEFULNESS and NEUTRALITY
 

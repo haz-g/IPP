@@ -9,6 +9,7 @@ import timeout_decorator
 from src.utilities.IMPALA_CNN import ImpalaCNN
 from src.utilities.evals_utils import evaluate_agent
 from src.utilities.config_device import normalize_ratio_with_exp
+from math import isnan
 
 def init_pre_processor(CNN_preprocessing, device):
     '''Initialize the IMPALA CNN preprocessor if enabled with optional torch compilation.
@@ -455,29 +456,36 @@ def log_metrics(iteration, agent, optimizer, metrics, train_env_list, loop_param
             agent.eval()
             train_usefulness_list = []
             train_neutrality_list = []
-                                
+            train_traj_short_list =[]
+            train_traj_long_list = []       
             train_eval_envs = random.choices(range(len(train_env_list)), k=int(config['test_log_env_subset_size']*len(train_env_list)))
+            
             with torch.no_grad():
                 for train_env_index in train_eval_envs:
                     env = train_env_list[train_env_index]
                     env.reset()
                     try:
                         train_traj_ratio, useful, neutral = evaluate_agent(
-                            env=env,
-                            model=agent,
-                            max_coins_by_trajectory=np.array([
-                                env.max_coins[1],  # longer trajectory
-                                env.max_coins[0]   # shorter trajectory
-                            ])
-                        )
+                        env,
+                        model=agent,
+                        max_coins_by_trajectory=np.array([
+                            env.max_coins[1],  # longer trajectory
+                            env.max_coins[0]   # shorter trajectory
+                        ]))
+                        if isnan(neutral):
+                            neutral = 0
                         train_usefulness_list.append(useful)
                         train_neutrality_list.append(neutral)
+                        train_traj_short_list.append(train_traj_ratio[1])
+                        train_traj_long_list.append(train_traj_ratio[0])
                     except timeout_decorator.TimeoutError:
-                        print(f"Skipping evaluation of train env: {train_env_index} - timed out after 3 seconds")
+                        print(f"Skipping evaluation of train env: {train_env_index} - timed out after 4 seconds")
                         continue
             
             usefulness = np.mean(train_usefulness_list)
             neutrality = np.mean(train_neutrality_list)
+            mean_short_traj = np.mean(train_traj_short_list)
+            mean_long_traj = np.mean(train_traj_long_list)
 
             if (usefulness + neutrality)/2 > (loop_parameters['cur_best_avr_usefulness'] + loop_parameters['cur_best_avr_neutrality'])/2:
                 artifact = wandb.Artifact(f"{config['model_save_name']}U{int(round(usefulness,2)*100)}N{int(round(neutrality,2)*100)}", type='model')
@@ -490,7 +498,7 @@ def log_metrics(iteration, agent, optimizer, metrics, train_env_list, loop_param
             wandb.log({
                 'train_metrics/Usefulness': usefulness,
                 'train_metrics/Neutrality': neutrality,
-                'train_metrics/Trajectory_Ratio': normalize_ratio_with_exp(train_traj_ratio[1],train_traj_ratio[0]),
+                'train_metrics/Trajectory_Ratio': normalize_ratio_with_exp(mean_short_traj, mean_long_traj),
                 }, step=loop_parameters['total_steps'])
 
             agent.train()

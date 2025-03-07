@@ -25,7 +25,7 @@ def average_evals(env_list,model):
 
     return av_traj, av_usefulness, av_entropy
 
-@timeout_decorator.timeout(3)
+@timeout_decorator.timeout(4)
 def evaluate_agent(env, model, max_coins_by_trajectory): 
     '''Computes the usefulness and entropy of the agent.
     Expects user defined numpy array max_coins_by_trajectory of shape (2,),
