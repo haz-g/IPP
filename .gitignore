@@ -46,7 +46,6 @@ wheels/
 wandb/
 runs/
 logs/
-test.py
 *.log
 *.pt
 !models/.gitkeep
@@ -65,3 +64,4 @@ Thumbs.db
 .env
 .flaskenv
 config.local.py
+generate_envs.py

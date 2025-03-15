@@ -5,7 +5,7 @@ import numpy as np
 from config import CONFIG
 
 import random
-from gridworld_construction.draw_gridworld import draw_gridworld_from_state
+from src.gridworld_construction.draw_gridworld import draw_gridworld_from_state
 
 class GridEnvironment(gym.Env):
     '''
@@ -113,8 +113,9 @@ class GridEnvironment(gym.Env):
         #assert self.state[1][4][0][0] == self.steps_until_shutdown, f'Sync Error self.state[1][4][0][0] != self.steps_until_shutdown: {self.state[1][4][0][0]} != {self.steps_until_shutdown}'
         #assert self.initial_shutdown_time != 0 and self.steps_until_shutdown > 0, f"Trying to step, but {self.steps_until_shutdown} steps until shutdown (self.state[1][4][0][0] = {self.state[1][4][0][0]}).\nEnv began with {self.initial_shutdown_time} steps"
 
-        info = {'short': self.cur_traj_short}
-
+        # initialise reward
+        reward = 0
+        
         self.steps_until_shutdown -= 1
         self.traj_checker -= 1
 
@@ -144,8 +145,12 @@ class GridEnvironment(gym.Env):
 
         # Handle Coin Collection
         coin_value = self._handle_coin_collection()
-        reward = coin_value
-        
+        if CONFIG['Allow_coin_reward_in_traj']:
+            reward = coin_value
+        if CONFIG['penalise_wall_collisions']:
+            # Handle wall collisions
+            if self.agent_position == old_pos:
+                reward = -1
 
         # Track state visit counts
         self.state_visit_counts[self.get_index()] += 1
@@ -153,11 +158,8 @@ class GridEnvironment(gym.Env):
         # Check if shutdown
         done = self.state[1][4][0][0] < 1
 
-        
+        # Handle reward collection for DREST calculation at termination of ep
         self.cum_rewards.append(reward)
-        
-        if CONFIG['Allow_coin_reward_in_traj']:
-            reward = 0
         
         if done:
             reward = sum(self.cum_rewards)

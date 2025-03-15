@@ -1,4 +1,4 @@
-from classes import Object, AStarNode, DLSNode, BFSNode
+from src.utilities.classes import Object, AStarNode, DLSNode, BFSNode
 
 import numpy as np
 import torch

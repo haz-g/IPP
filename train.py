@@ -76,4 +76,4 @@ if __name__ == "__main__":
     # ----- RUN FINAL EVAL AND LOG FINAL POLICY -----
 
     # Wrap up training by evaluating final policy on test envs and storing to wandb as artifact
-    wrapup_training(agent, test_env_list, envs, CONFIG)
+    wrapup_training(agent, test_env_list, train_env_list, envs, CONFIG)

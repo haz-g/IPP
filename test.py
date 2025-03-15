@@ -1,15 +1,12 @@
-# Created to test models downloaded directly from wandb and stored in src/models/
-
 import numpy as np
 import pickle 
 import torch
+import pandas as pd
 from src.Generalist.PPO2 import Agent 
-from src.utilities.evals_utils import evaluate_agent
 from config import CONFIG
 import plotly.figure_factory as ff
-import timeout_decorator
 import sys
-from math import isnan
+from src.utilities.config_wrapup import evaluate_on_test_envs, evaluate_on_train_envs
 
 sys.path.append('src')
 with open(CONFIG['train_env_list'], "rb") as f:
@@ -17,72 +14,25 @@ with open(CONFIG['train_env_list'], "rb") as f:
 with open(CONFIG['test_env_list'], "rb") as t:
     test_env_list = pickle.load(t)
 
-model = 'DREST_0228-1754_USE_35_NEUT_81'
-model_path = f"src/models/{model}.pt"
+# Fill this with the relevant run id and models you'd like to evaluate from your /models dir
+model_dict = {"Run ID": ["model1.pt", "model2.pt", "model3.pt"]}
 
-agent = Agent(test_env_list)
-agent.load_state_dict(torch.load(model_path))
-agent.eval()
+for exp_id, model_list in model_dict.items():
+    print(f'\nExperiment {exp_id}\n')
 
-print('\n\nTEST ENVS\n\n')
-with torch.no_grad():
-    test_usefulness_list = []
-    test_neutrality_list = []
-    test_traj_short = []
-    test_traj_long = []
-    for test_env in test_env_list:
-            test_env.reset()
-            try:
-                test_traj_ratio, useful, neutral = evaluate_agent(
-                    env=test_env,
-                    model=agent,
-                    max_coins_by_trajectory=np.array([
-                        test_env.max_coins[1],  # longer trajectory
-                        test_env.max_coins[0]   # shorter trajectory
-                    ])
-                )
-                if isnan(neutral):
-                    neutral = 0
-                test_usefulness_list.append(useful)
-                test_neutrality_list.append(neutral)
-                test_traj_short.append(test_traj_ratio[1])
-                test_traj_long.append(test_traj_ratio[0])
-                print(f'[{round(test_traj_ratio[1],2)},{round(test_traj_ratio[0],2)}], USE:{round(useful,2)}, NEUT:{round(neutral,2)}')
-            except timeout_decorator.TimeoutError:
-                    print(f"Skipping evaluation of test env - timed out after 3 seconds")
-                    continue
-    print('\n\nTRAIN ENVS\n\n')
-    train_usefulness_list = []
-    train_neutrality_list = []
-    train_traj_short =[]
-    train_traj_long = []
-    for train_env in train_env_list:
-            train_env.reset()
-            try:
-                train_traj_ratio, useful, neutral = evaluate_agent(
-                    env=train_env,
-                    model=agent,
-                    max_coins_by_trajectory=np.array([
-                        train_env.max_coins[1],  # longer trajectory
-                        train_env.max_coins[0]   # shorter trajectory
-                    ])
-                )
-                if isnan(neutral):
-                    neutral = 0
-                train_usefulness_list.append(useful)
-                train_neutrality_list.append(neutral)
-                train_traj_short.append(train_traj_ratio[1])
-                train_traj_long.append(train_traj_ratio[0])
-                print(f'[{round(train_traj_ratio[1],2)},{round(train_traj_ratio[0],2)}], USE:{round(useful,2)}, NEUT:{round(neutral,2)}')
-            except timeout_decorator.TimeoutError:
-                    print(f"Skipping evaluation of train env - timed out after 3 seconds")
-                    continue
-            
-data_matrix = [['Metric', 'Train Env Score', 'Test Env Score'],
-            ['Usefulness', round(np.mean(train_usefulness_list),2), round(np.mean(test_usefulness_list),2)],
-            ['Neutrality', round(np.mean(train_neutrality_list),2), round(np.mean(test_neutrality_list),2)],
-            ['Avr. % Short Trajectory', round(np.mean(train_traj_short)*100,2), round(np.mean(test_traj_short)*100,2)],
-            ['Avr % Lng Trajectory', round(np.mean(train_traj_long)*100,2), round(np.mean(test_traj_long)*100,2)]]  
-fig = ff.create_table(data_matrix)
-fig.update_layout(title_text=f"{model}", title_x=0.5)
-fig.show()
+    for model in model_list:
+        model_path = f"src/models/{model}"
+        
+        try:
+            agent = Agent(test_env_list)
+            agent.load_state_dict(torch.load(model_path))
+            agent.eval()
+
+            avr_train_usefulness, avr_train_neutrality, avr_train_short_traj, avr_train_long_traj = evaluate_on_train_envs(agent, train_env_list, verbose=False)
+            avr_test_usefulness, avr_test_neutrality, avr_test_short_traj, avr_test_long_traj = evaluate_on_test_envs(agent, test_env_list, verbose=False)
+
+            print(f'Evaluated Model {model} - Train: U {avr_train_usefulness} | N {avr_train_neutrality} | [{avr_train_short_traj},{avr_train_long_traj}] | Test: U {avr_test_usefulness} | N {avr_test_neutrality} | [{avr_test_short_traj},{avr_test_long_traj}]')
+        
+        except Exception as e:
+            print(f"Error evaluating model {model}: {e}")
+            continue
