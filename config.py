@@ -10,8 +10,8 @@ CONFIG = {
     'wandb_entity': 'IPP-experiments',
 
     # --- ENV SPECIFIC ---
-    'train_env_list': 'src/gridworld_construction/gridworlds_200.pkl',
-    'test_env_list': 'src/gridworld_construction/gridworlds_test_40.pkl',
+    'train_env_list': 'src/gridworld_construction/gridworlds_200_singletime.pkl',
+    'test_env_list': 'src/gridworld_construction/gridworlds_test_40_singletime.pkl',
     'DREST_lambda_factor': 0.80,
     'meta_ep_size': 64, # After how many mini-env runs would you like to change to a new mini-env
     'num_steps': 2048, # per policy rollout
@@ -24,7 +24,7 @@ CONFIG = {
 
     # --- ALGO SPECIFIC ---
     'CNN_preprocessing': False, # If true observations will be pre-processed via IMPALA CNN
-    'total_timesteps': 100_000_000,
+    'total_timesteps': 500_000,
     'learning_rate': 0.000001,
     'anneal_lr': True, # Exponentially decay learning rate for policy and value networks
     'decay_rate': 0.999, # after 'decay_steps' (calculated automatically) lr is decayed by this value
