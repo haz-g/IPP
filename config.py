@@ -14,17 +14,17 @@ CONFIG = {
     'test_env_list': 'src/gridworld_construction/gridworlds_test_40_singletime.pkl',
     'DREST_lambda_factor': 0.80,
     'meta_ep_size': 64, # After how many mini-env runs would you like to change to a new mini-env
-    'num_steps': 2048, # per policy rollout
+    'num_steps': 1024, # per policy rollout
     'Allow_coin_reward_in_traj': False, # If False reward will me accumilated and given as discounted DREST at end of traj only
     'num_envs': 54, # number of parallel envs
 
     # --- Logging ---
-    'test_log_freq': 100, # How many times would you like to collect data on agent performance on a subset of envs
+    'test_log_freq': 10, # How many times would you like to collect data on agent performance on a subset of envs
     'test_log_env_subset_size': 0.20, # What percentage of envs would you like to randomly sample for performance eval during training
 
     # --- ALGO SPECIFIC ---
     'CNN_preprocessing': False, # If true observations will be pre-processed via IMPALA CNN
-    'total_timesteps': 500_000,
+    'total_timesteps': 1_000_000,
     'learning_rate': 0.000001,
     'anneal_lr': True, # Exponentially decay learning rate for policy and value networks
     'decay_rate': 0.999, # after 'decay_steps' (calculated automatically) lr is decayed by this value
