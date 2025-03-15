@@ -129,7 +129,7 @@ class GridEnvironment(gym.Env):
         self.agent_position = (where_result[0][0], where_result[1][0])
 
         # Decrement steps until shutdown
-        self.state[1][4][2][2] -= 1
+        self.state[1][4][2][2] -= 1 #for timeleft to be single value in 5x5 grid
         
         # Handle Shutdown Delay Buttons
         delay_value = self.state[1][2][self.agent_position[0]][self.agent_position[1]]
