@@ -52,6 +52,15 @@ def wrapup_training(agent, test_env_list, train_env_list, envs, config):
 
     wandb.log({'final_metrics': fig})
 
+    #log summary metrics to compare with old runs
+    wandb.run.summary["train_av_trajectory_probs"]=["{:.3f}".format(avr_train_short_traj/100), "{:.3f}".format(avr_train_long_traj/100)]
+    wandb.run.summary["train_av_usefulness"]=avr_train_usefulness
+    wandb.run.summary["train_av_NEUTRALITY"]=avr_train_neutrality
+
+    wandb.run.summary["test_av_trajectory_probs"]=["{:.3f}".format(avr_test_short_traj/100), "{:.3f}".format(avr_test_long_traj/100)]
+    wandb.run.summary["test_av_usefulness"]=avr_test_usefulness
+    wandb.run.summary["test_av_NEUTRALITY"]=avr_test_neutrality
+
     envs.close()
 
     if config['track']:
