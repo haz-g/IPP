@@ -117,7 +117,7 @@ def evaluate_on_train_envs(agent, train_env_list, verbose=True):
             env.reset()
 
             try:
-                train_traj_ratio, useful, neutral = evaluate_agent(env, agent, np.array([train_env.max_coins[1], train_env.max_coins[0]]))
+                train_traj_ratio, useful, neutral = evaluate_agent(env, agent, np.array([env.max_coins[1], env.max_coins[0]]))
                 
                 if isnan(neutral):
                     neutral = 0
