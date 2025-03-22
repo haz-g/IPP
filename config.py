@@ -43,8 +43,8 @@ CONFIG = {
     'target_kl': None, # the target KL divergence threshold
 
     # --- Model Loading ---
-    'load_model': True,
-    'model_to_load': 'D141303U53N65.pt',
+    'load_model': False,
+    'model_to_load': 'NA',
 }
 
 # Create a unique run tag for logging and checkpoint naming.
@@ -52,7 +52,7 @@ RUN_TAG = time.strftime('%d%H%M')
 
 # Additional Configurations Auto-Complete
 CONFIG['model_save_name'] = f'D{RUN_TAG}'
-CONFIG['seed'] = 2744 # np.random.randint(0, 1000000)
+CONFIG['seed'] = np.random.randint(0, 1000000)
 CONFIG['batch_size'] = int(CONFIG['num_envs'] * CONFIG['num_steps'])
 CONFIG['minibatch_size'] = int(CONFIG['batch_size'] // CONFIG['num_minibatches'])
 CONFIG['num_iterations'] = CONFIG['total_timesteps'] // CONFIG['batch_size']
